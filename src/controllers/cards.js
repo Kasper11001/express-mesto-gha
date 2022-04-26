@@ -3,6 +3,7 @@ const Card = require('../models/card');
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const SERVER_ERROR = 500;
+const OK = 200;
 
 module.exports.getCards = (req, res) => {
   Card.find({}).populate('owner')
@@ -21,9 +22,11 @@ module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner })
     .then((card) => {
-      Card.find({ _id: card._id }).populate('owner')
-        .then((newCard) => res.send({ data: newCard }))
-        .catch((err) => console.log(err));
+      if (card) {
+        Card.find({ _id: card._id }).populate('owner')
+          .then((newCard) => res.status(OK).send({ data: newCard }))
+          .catch((err) => console.log(err));
+      }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -41,7 +44,7 @@ module.exports.deleteCard = (req, res) => {
         res.status(NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена.' });
         return;
       }
-      res.send({ data: card });
+      res.status(OK).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -62,7 +65,7 @@ module.exports.likeCard = (req, res) => Card.findByIdAndUpdate(
       res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
       return;
     }
-    res.send({ data: card });
+    res.status(OK).send({ data: card });
   })
   .catch((err) => {
     if (err.name === 'CastError') {
@@ -82,7 +85,7 @@ module.exports.dislikeCard = (req, res) => Card.findByIdAndUpdate(
       res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
       return;
     }
-    res.send({ data: card });
+    res.status(OK).send({ data: card });
   })
   .catch((err) => {
     if (err.name === 'CastError') {

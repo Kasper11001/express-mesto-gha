@@ -3,6 +3,7 @@ const User = require('../models/user');
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const SERVER_ERROR = 500;
+const OK = 200;
 
 module.exports.getUsers = (req, res) => {
   User.find({})
@@ -21,7 +22,11 @@ module.exports.getUserById = (req, res) => {
       }
       res.send({ data: user });
     })
-    .catch(() => {
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные запроса' });
+        return;
+      }
       res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
@@ -55,7 +60,7 @@ module.exports.updateProfile = (req, res) => {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
         return;
       }
-      res.send({ data: newUser });
+      res.status(OK).send({ data: newUser });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -82,7 +87,7 @@ module.exports.updateAvatar = (req, res) => {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
         return;
       }
-      res.send({ data: newUser });
+      res.status(OK).send({ data: newUser });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
