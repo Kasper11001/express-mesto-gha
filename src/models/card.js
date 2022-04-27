@@ -14,6 +14,7 @@ const cardSchema = new mongoose.Schema({
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
+    required: true,
   },
   likes: [
     { // описываем схему для одного элемента и заключаем её в квадратные скобки

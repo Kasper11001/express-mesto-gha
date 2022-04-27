@@ -21,13 +21,7 @@ module.exports.createCard = (req, res) => {
   const owner = req.user._id;
   const { name, link } = req.body;
   Card.create({ name, link, owner })
-    .then((card) => {
-      if (card) {
-        Card.find({ _id: card._id }).populate('owner')
-          .then((newCard) => res.status(OK).send({ data: newCard }))
-          .catch((err) => console.log(err));
-      }
-    })
+    .then((card) => res.status(OK).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.' });
@@ -57,7 +51,7 @@ module.exports.deleteCard = (req, res) => {
 
 module.exports.likeCard = (req, res) => Card.findByIdAndUpdate(
   req.params.cardId,
-  { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+  { $addToSet: { likes: req.user._id } },
   { new: true },
 ).populate('likes').populate('owner')
   .then((card) => {
@@ -77,7 +71,7 @@ module.exports.likeCard = (req, res) => Card.findByIdAndUpdate(
 
 module.exports.dislikeCard = (req, res) => Card.findByIdAndUpdate(
   req.params.cardId,
-  { $pull: { likes: req.user._id } }, // убрать _id из массива
+  { $pull: { likes: req.user._id } },
   { new: true },
 ).populate('likes').populate('owner')
   .then((card) => {
