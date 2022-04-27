@@ -8,11 +8,7 @@ const OK = 200;
 module.exports.getCards = (req, res) => {
   Card.find({}).populate('owner')
     .then((card) => {
-      if (card.length === 0) {
-        res.status(NOT_FOUND).send({ message: 'Карточки отсутствуют' });
-        return;
-      }
-      res.send({ data: card });
+      res.status(OK).send({ data: card });
     })
     .catch(() => res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
 };
