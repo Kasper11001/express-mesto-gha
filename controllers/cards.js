@@ -28,19 +28,31 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId).populate('owner')
+  const owner = req.user._id;
+  Card.findById(req.params.cardId)
     .then((card) => {
-      if (!card) {
-        res.status(NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена.' });
-        return;
+      console.log(owner);
+      console.log(card.owner._id);
+      if (card.owner === owner) {
+        Card.findByIdAndRemove(req.params.cardId).populate('owner')
+          .then((card) => {
+            if (!card) {
+              res.status(NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена.' });
+              return;
+            }
+            res.status(OK).send({ data: card });
+          })
+          .catch((err) => {
+            if (err.name === 'CastError') {
+              res.status(BAD_REQUEST).send({ message: 'Отправлен некоректный ID карточки' });
+              return;
+            }
+            res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+          });
       }
-      res.status(OK).send({ data: card });
+      res.status(BAD_REQUEST).send({ message: 'Можно удалять только собственные карточки' });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Отправлен некоректный ID карточки' });
-        return;
-      }
+    .catch(() => {
       res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };

@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const BAD_REQUEST = 400;
@@ -7,6 +9,17 @@ const OK = 200;
 
 module.exports.getUsers = (req, res) => {
   User.find({})
+    .then((user) => res.send({ data: user }))
+    .catch(() => {
+      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
+};
+
+module.exports.getProfile = (req, res) => {
+  console.log('dd');
+  const userId = req.user._id;
+  console.log(userId);
+  User.findById(userId)
     .then((user) => res.send({ data: user }))
     .catch(() => {
       res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
@@ -32,9 +45,21 @@ module.exports.getUserById = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+  const {
+    email, password, name, about, avatar,
+  } = req.body;
+  // хешируем пароль
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      email,
+      password: hash,
+      name,
+      about,
+      avatar, // записываем хеш в базу
+    }))
+    .then((user) => {
+      res.send({ data: user });
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.' });
@@ -95,5 +120,32 @@ module.exports.updateAvatar = (req, res) => {
         return;
       }
       res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      // аутентификация успешна! пользователь в переменной user
+      const token = jwt.sign(
+        { _id: user._id },
+        'some-secret-key',
+        { expiresIn: '7d' }, // токен будет просрочен через семь дней после создания
+      );
+      // вернём токен
+      res.cookie('jwt', token, {
+        // token - наш JWT токен, который мы отправляем
+        maxAge: 3600000,
+        httpOnly: true,
+      });
+      res.end();
+    })
+    .catch((err) => {
+      // ошибка аутентификации
+      res
+        .status(401)
+        .send({ message: err.message });
     });
 };
