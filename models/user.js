@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
 const bcrypt = require('bcryptjs');
-
-const { isEmail } = validator;
+const isEmail = require('validator/lib/isEmail');
+const { LINK_REGEX } = require('../constants');
+const UnauthorizedError = require('../errors/unauthorized-error');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -10,16 +10,15 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     validate: {
-      validator(v) {
-        return isEmail(v);
-      },
-      message: 'Вам должно быть больше 18 лет!',
+      validator: (v) => isEmail(v),
+      message: 'Некорректный email.',
     },
   },
   password: {
     type: String,
     required: true,
     minlength: 8,
+    select: false,
   },
   name: {
     default: 'Жак-Ив Кусто',
@@ -36,20 +35,24 @@ const userSchema = new mongoose.Schema({
   avatar: {
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     type: String,
+    validate: {
+      validator: (v) => LINK_REGEX.test(v),
+      message: 'Некорректная ссылка.',
+    },
   },
 });
 
 userSchema.statics.findUserByCredentials = function (email, password) {
-  return this.findOne({ email })
+  return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        return Promise.reject(new UnauthorizedError('Неправильные почта или пароль.'));
       }
 
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            return Promise.reject(new UnauthorizedError('Неправильные почта или пароль.'));
           }
 
           return user; // теперь user доступен

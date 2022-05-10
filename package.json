@@ -1,8 +1,8 @@
 {
   "name": "express-mesto-gha",
   "version": "1.0.0",
-  "description": "[![Tests](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-13-sprint.yml/badge.svg)](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-13-sprint.yml) [![Tests](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-14-sprint.yml/badge.svg)](https://github.com/yandex-praktikum/express-mesto-gha/actions/workflows/tests-14-sprint.yml)\r # Проект Mesto фронтенд + бэкенд",
-  "main": "./src/app.js",
+  "description": "[![Tests for sprint 13](https://github.com/TinaevNK/express-mesto-gha/actions/workflows/tests-13-sprint.yml/badge.svg)](https://github.com/TinaevNK/express-mesto-gha/actions/workflows/tests-13-sprint.yml)",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
@@ -13,24 +13,28 @@
     "url": "git+https://github.com/Kasper11001/express-mesto-gha.git"
   },
   "keywords": [],
-  "author": "Vasily Vasiliev",
+  "author": "VasilievVasily",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Kasper11001/express-mesto-gha/issues"
-  },
-  "homepage": "https://github.com/Kasper11001/express-mesto-gha#readme",
-  "devDependencies": {
-    "eslint": "^8.14.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "nodemon": "^2.0.15"
-  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.0",
+    "celebrate": "^15.0.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "express-rate-limit": "^6.4.0",
+    "express-winston": "^4.2.0",
+    "helmet": "^5.0.2",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.3.1",
-    "validator": "^13.7.0"
+    "mongoose": "^6.3.0",
+    "validator": "^13.7.0",
+    "winston": "^3.7.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.13.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "nodemon": "^2.0.15"
   }
 }

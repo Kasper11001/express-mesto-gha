@@ -2,74 +2,71 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const BAD_REQUEST = 400;
-const NOT_FOUND = 404;
-const SERVER_ERROR = 500;
-const OK = 200;
+const NotFoundError = require('../errors/not-found-error');
+const BadRequestError = require('../errors/bad-request-error');
+const ConflictError = require('../errors/conflict-error');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((user) => res.send({ data: user }))
-    .catch(() => {
-      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-    });
+    .catch(next);
 };
 
-module.exports.getProfile = (req, res) => {
-  console.log('dd');
-  const userId = req.user._id;
-  console.log(userId);
-  User.findById(userId)
+module.exports.getCurrentUser = (req, res, next) => {
+  const currentUserId = req.user._id;
+  User.findById(currentUserId)
+    .orFail(() => next(new NotFoundError('Пользователь по указанному _id не найден.')))
     .then((user) => res.send({ data: user }))
-    .catch(() => {
-      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-    });
+    .catch(next);
 };
 
-module.exports.getUserById = (req, res) => {
+module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
-    .then((user) => {
-      if (!user) {
-        res.status(NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден.' });
-        return;
-      }
-      res.send({ data: user });
-    })
+    .orFail(() => next(new NotFoundError('Пользователь по указанному _id не найден.')))
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные запроса' });
-        return;
+        next(new BadRequestError('Передан некорректный _id пользователя.'));
+      } else {
+        next(err);
       }
-      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     email, password, name, about, avatar,
   } = req.body;
+
+  if (!email || !password) {
+    next(new BadRequestError('Email и password не могут быть пустыми.'));
+  }
   // хешируем пароль
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
       email,
-      password: hash,
+      password: hash, // записываем хеш в базу
       name,
       about,
-      avatar, // записываем хеш в базу
+      avatar,
     }))
     .then((user) => {
-      res.send({ data: user });
+      const newUser = user.toObject();
+      delete newUser.password;
+      res.send({ data: newUser });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.' });
-        return;
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя.'));
+      } else if (err.code === 11000) {
+        next(new ConflictError('Такой пользователь уже существует.'));
+      } else {
+        next(err);
       }
-      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
-module.exports.updateProfile = (req, res) => {
+module.exports.updateProfile = (req, res, next) => {
   const userId = req.user._id;
   const { name, about } = req.body;
   User.findByIdAndUpdate(
@@ -80,23 +77,18 @@ module.exports.updateProfile = (req, res) => {
       runValidators: true, // данные будут валидированы перед изменением
     },
   )
-    .then((newUser) => {
-      if (!newUser) {
-        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-        return;
-      }
-      res.status(OK).send({ data: newUser });
-    })
+    .orFail(() => next(new NotFoundError('Пользователь по указанному _id не найден.')))
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
-        return;
+        next(new BadRequestError('Переданы некорректные данные при обновлении профиля.'));
+      } else {
+        next(err);
       }
-      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const userId = req.user._id;
   const { avatar } = req.body;
   User.findByIdAndUpdate(
@@ -107,23 +99,18 @@ module.exports.updateAvatar = (req, res) => {
       runValidators: true, // данные будут валидированы перед изменением
     },
   )
-    .then((newUser) => {
-      if (!newUser) {
-        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-        return;
-      }
-      res.status(OK).send({ data: newUser });
-    })
+    .orFail(() => next(new NotFoundError('Пользователь по указанному _id не найден.')))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
-        return;
+        next(new BadRequestError('Переданы некорректные данные при обновлении аватара.'));
+      } else {
+        next(err);
       }
-      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
@@ -140,12 +127,8 @@ module.exports.login = (req, res) => {
         maxAge: 3600000,
         httpOnly: true,
       });
+      res.send({ message: 'Успешно' });
       res.end();
     })
-    .catch((err) => {
-      // ошибка аутентификации
-      res
-        .status(401)
-        .send({ message: err.message });
-    });
+    .catch(next);
 };
