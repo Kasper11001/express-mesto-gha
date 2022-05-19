@@ -29,8 +29,9 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(requestLogger);
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', 'https://vasilyvasiliev.nomoreparties.sbs');
 
   const { method } = req; // Сохраняем тип запроса (HTTP-метод) в соответствующую переменную
 
