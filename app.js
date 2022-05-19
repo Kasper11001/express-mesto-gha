@@ -25,6 +25,10 @@ app.use(cors());
 app.use(helmet());
 app.use(limiter);
 
+app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(requestLogger);
 const allowedCors = [
   'https://vasilyvasiliev.nomoreparties.sbs',
 ];
@@ -58,11 +62,6 @@ app.use((req, res, next) => {
 
   return next();
 });
-
-app.use(cookieParser());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(requestLogger);
 app.use(router);
 app.use(errorLogger);
 
