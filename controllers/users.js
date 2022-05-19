@@ -123,7 +123,7 @@ module.exports.login = (req, res, next) => {
       );
       // вернём токен
 
-      res.send({ token });
+      res.send({ data: token });
       res.end();
     })
     .catch(next);
