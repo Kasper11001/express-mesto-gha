@@ -122,12 +122,8 @@ module.exports.login = (req, res, next) => {
         { expiresIn: '7d' }, // токен будет просрочен через семь дней после создания
       );
       // вернём токен
-      res.cookie('jwt', token, {
-        // token - наш JWT токен, который мы отправляем
-        maxAge: 3600000,
-        httpOnly: true,
-      });
-      res.send({ message: 'Успешно' });
+
+      res.send({ token });
       res.end();
     })
     .catch(next);

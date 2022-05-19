@@ -57,7 +57,6 @@ app.use((req, res, next) => {
 });
 app.use(router);
 app.use(errorLogger);
-
 app.use(errors());
 app.use(errorHandler);
 
