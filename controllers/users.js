@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
+const { NODE_ENV, JWT_SECRET = 'secret-key' } = process.env;
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
 const ConflictError = require('../errors/conflict-error');
@@ -116,14 +117,14 @@ module.exports.login = (req, res, next) => {
   return User.findUserByCredentials(email, password)
     .then((user) => {
       // аутентификация успешна! пользователь в переменной user
-      const token = jwt.sign(
-        { _id: user._id },
-        'some-secret-key',
-        { expiresIn: '7d' }, // токен будет просрочен через семь дней после создания
-      );
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'secret-key', { expiresIn: '7d' });
       // вернём токен
-
-      res.send({ data: token });
+      res.cookie('jwt', token, {
+        // token - наш JWT токен, который мы отправляем
+        maxAge: 3600000,
+        httpOnly: true,
+      });
+      res.send({ message: 'успешно' });
       res.end();
     })
     .catch(next);
