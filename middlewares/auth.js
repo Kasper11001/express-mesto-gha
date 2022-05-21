@@ -4,7 +4,6 @@ const UnauthorizedError = require('../errors/unauthorized-error');
 
 module.exports = (req, res, next) => {
   if (!req.cookies.jwt) {
-    console.log('asda');
     return next(new UnauthorizedError('Необходима авторизация.'));
   }
 
@@ -18,6 +17,5 @@ module.exports = (req, res, next) => {
   }
 
   req.user = payload; // записываем пейлоуд в объект запроса
-  console.log(payload);
   return next(); // пропускаем запрос дальше
 };
